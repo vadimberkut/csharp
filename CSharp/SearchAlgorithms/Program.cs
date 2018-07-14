@@ -12,6 +12,8 @@ namespace SearchAlgorithms
     {
         static void Main(string[] args)
         {
+            Random random = new Random();
+
             // Linear search
             int[] arr1 = new int[] { 2, 3, 5, 6 };
             Point[] arr2 = new Point[] { new Point { X = 1, Y = 10 }, new Point { X = 12, Y = 210 }, new Point { X = 14, Y = 130 }, new Point { X = 61, Y = 10 } };
@@ -33,7 +35,12 @@ namespace SearchAlgorithms
             // Measure execution time on big data
             int hugeArrSize = 10000000;
             string[] hugeArr = new string[hugeArrSize];
-            for (int i = 0; i < hugeArrSize; i++) hugeArr[i] = i.ToString();
+            int[] hugeArrInt = new int[hugeArrSize];
+            for (int i = 0; i < hugeArrSize; i++)
+            {
+                hugeArr[i] = i.ToString();
+                hugeArrInt[i] = i;
+            }
             Stopwatch sw = new Stopwatch();
 
             sw.Reset();
@@ -41,19 +48,32 @@ namespace SearchAlgorithms
             int resH1 = LinearSearchIndex(hugeArr, (hugeArrSize - 1).ToString());
             sw.Stop();
             long t1 = sw.ElapsedMilliseconds;
+            Console.WriteLine("Linear Search: {0}", sw.ElapsedMilliseconds);
+            Console.WriteLine();
 
             sw.Reset();
             sw.Start();
             int resH2 = BinarySearchIndex(hugeArr, (hugeArrSize - 1).ToString());
             sw.Stop();
             long t2 = sw.ElapsedMilliseconds;
+            Console.WriteLine("Binary Search: {0}", sw.ElapsedMilliseconds);
+            Console.WriteLine();
 
             sw.Reset();
             sw.Start();
             int resH3 = JumpSearchIndex(hugeArr, (hugeArrSize - 1).ToString());
             sw.Stop();
             long t3 = sw.ElapsedMilliseconds;
+            Console.WriteLine("Jump Search: {0}", sw.ElapsedMilliseconds);
+            Console.WriteLine();
 
+            sw.Reset();
+            sw.Start();
+            int resH4 = InterpolationSearchIndex(hugeArrInt, random.Next(0, (hugeArrSize - 1)));
+            sw.Stop();
+            long t4 = sw.ElapsedMilliseconds;
+            Console.WriteLine("Interpolation Search: {0}", sw.ElapsedMilliseconds);
+            Console.WriteLine();
 
             Console.ReadKey();
         }
@@ -110,7 +130,7 @@ namespace SearchAlgorithms
         static int JumpSearchIndex<T>(T[] collection, T value, int blockSize = -1) where T : IComparable
         {
             // Select optimal block size if not specified
-            if (blockSize == -1) blockSize = (int)(Math.Ceiling(Math.Sqrt(collection.Length)));
+            if (blockSize == -1) blockSize = (int)(Math.Ceiling(Math.Sqrt(collection.Length))); // sqert(n) is the optimal block size value
 
             for (int i = 0; i < collection.Length; i += blockSize)
             {
@@ -129,5 +149,42 @@ namespace SearchAlgorithms
             return -1;
         }
 
+        /// <summary>
+        /// Searches index of element in ordered array
+        /// Using own index to search calculated based on search value
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        static int InterpolationSearchIndex(int[] collection, int value, int lo = -1, int hi = -1)
+        {
+            // TODO: How use this alg with other data types that don't have 'minus' operation overloaded
+            // The idea of formula is to return higher value for pos
+            // when element to be searched is closer to arr[hi]. And
+            // smaller value when closer to arr[lo]
+            if(lo > hi)
+            {
+                return -1;
+            }
+            lo = lo == -1 ? 0 : lo;
+            hi = hi == -1 ? collection.Length - 1 : hi;
+            int x = value;
+            int pos = lo + (((hi - lo) / (collection[hi] - collection[lo])) * (x - collection[lo]));
+            if(value == collection[pos])
+            {
+                return pos;
+            }
+            else if(value < collection[pos])
+            {
+                // Less than - search in left part
+                return InterpolationSearchIndex(collection, value, lo, pos);
+            }
+            else
+            {
+                // More than - search in right
+                return InterpolationSearchIndex(collection, value, pos, hi);
+
+            }
+        }
     }
 }
